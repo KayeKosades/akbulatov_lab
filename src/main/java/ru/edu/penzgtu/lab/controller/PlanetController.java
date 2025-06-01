@@ -8,7 +8,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.edu.penzgtu.lab.base_response.BaseResponseService;
+import ru.edu.penzgtu.lab.base_response.ResponseWrapper;
 import ru.edu.penzgtu.lab.dto.PlanetDto;
+import ru.edu.penzgtu.lab.exception.ErrorType;
+import ru.edu.penzgtu.lab.exception.PenzGtuException;
 import ru.edu.penzgtu.lab.service.PlanetService;
 
 import java.util.List;
@@ -21,42 +25,45 @@ import java.util.List;
 public class PlanetController {
 
     private final PlanetService planetService;
+    private final BaseResponseService baseResponseService;
 
     @Operation(summary = "Получение всех планет", description = "Позволяет выгрузить все планеты из БД")
     @GetMapping
-    public List<PlanetDto> findAllPlanets() {
-        return planetService.findAllPlanets();
+    public ResponseWrapper<List<PlanetDto>> findAllPlanets() {
+        return baseResponseService.wrapSuccessResponse(planetService.findAllPlanets());
     }
 
     @Operation(summary = "Получение планеты по ID", description = "Позволяет выгрузить одну планету по ID из БД")
     @GetMapping("/{id}")
-    public PlanetDto findPlanetById(@PathVariable @Min(1) Long id) {
-        return planetService.findPlanetById(id);
+    public ResponseWrapper<PlanetDto> findPlanetById(@PathVariable @Min(1) Long id) {
+        return baseResponseService.wrapSuccessResponse(planetService.findPlanetById(id));
     }
 
     @Operation(summary = "Создать планету", description = "Позволяет создать новую запись о планете в БД")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public PlanetDto createPlanet(@RequestBody @Valid PlanetDto planetDto) {
-        return planetService.savePlanet(planetDto);
+    public ResponseWrapper<PlanetDto> createPlanet(@RequestBody @Valid PlanetDto planetDto) {
+        PlanetDto createdPlanet = planetService.savePlanet(planetDto);
+        return baseResponseService.wrapSuccessResponse(createdPlanet);
     }
 
     @Operation(summary = "Обновить данные о планете", description = "Позволяет обновить информацию о планете в БД")
     @PutMapping("/{id}")
-    public PlanetDto updatePlanet(@PathVariable @Min(1) Long id, @RequestBody @Valid PlanetDto planetDto) {
+    public ResponseWrapper<PlanetDto> updatePlanet(@PathVariable @Min(1) Long id, @RequestBody @Valid PlanetDto planetDto) { // <--- Изменен тип возврата
         if (planetDto.getId() == null) {
             planetDto.setId(id);
         } else if (!planetDto.getId().equals(id)) {
-            throw new IllegalArgumentException("ID в пути (" + id + ") не совпадает с ID в теле запроса (" + planetDto.getId() + ").");
+            throw new PenzGtuException(ErrorType.CLIENT_ERROR,"ID в пути (" + id + ") не совпадает с ID в теле запроса (" + planetDto.getId() + ").");
         }
-        return planetService.updatePlanet(planetDto);
+        PlanetDto updatedPlanet = planetService.updatePlanet(planetDto);
+        return baseResponseService.wrapSuccessResponse(updatedPlanet);
     }
 
     @Operation(summary = "Удалить планету по ID", description = "Позволяет удалить планету по ID из БД")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deletePlanetById(@PathVariable @Min(1) Long id) {
+    public ResponseWrapper<?> deletePlanetById(@PathVariable @Min(1) Long id) {
         planetService.deletePlanetById(id);
+        return baseResponseService.wrapSuccessResponse(null);
     }
-
 }
