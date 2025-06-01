@@ -1,5 +1,6 @@
 package ru.edu.penzgtu.lab.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -43,5 +44,6 @@ public class Planet {
             orphanRemoval = true,
             fetch = FetchType.LAZY
     )
+    @JsonManagedReference
     private List<Sputnik> satellites = new ArrayList<>();
 }

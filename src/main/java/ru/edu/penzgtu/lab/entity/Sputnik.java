@@ -1,5 +1,6 @@
 package ru.edu.penzgtu.lab.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -10,6 +11,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @EqualsAndHashCode(exclude = "planet")
+@Entity
 @Table(name = "sputniks")
 public class Sputnik {
     @Id
@@ -29,5 +31,6 @@ public class Sputnik {
     // Отношение многие к одному. много спутников могут принадлежать одной планете
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "planet_id", nullable = false) // Внешний ключ в таблице 'sputniks', ссылается на 'id' из 'planets'
+    @JsonBackReference
     private Planet planet;
 }
