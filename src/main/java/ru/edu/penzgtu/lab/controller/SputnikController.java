@@ -1,61 +1,61 @@
 package ru.edu.penzgtu.lab.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.edu.penzgtu.lab.entity.Sputnik;
+import ru.edu.penzgtu.lab.dto.SputnikDto;
 import ru.edu.penzgtu.lab.service.SputnikService;
 
 import java.util.List;
 
+@Validated
 @RestController
-@RequestMapping("/api/sputniks") // Базовый путь для всех эндпоинтов спутников
+@RequestMapping("/api/sputniks")
 @RequiredArgsConstructor
+@Tag(name = "Спутники", description = "Операции над спутниками")
 public class SputnikController {
 
     private final SputnikService sputnikService;
 
-    // Получение списка всех спутников
-    // GET http://localhost:8086/api/sputniks
+    @Operation(summary = "Получение всех спутников", description = "Позволяет выгрузить все спутники из БД")
     @GetMapping
-    public List<Sputnik> findAllSputniks() {
+    public List<SputnikDto> findAllSputniks() {
         return sputnikService.findAllSputniks();
     }
 
-    // Получение спутника по ID
-    // GET http://localhost:8086/api/sputniks/{id}
+    @Operation(summary = "Получение спутника по ID", description = "Позволяет выгрузить один спутник по ID из БД")
     @GetMapping("/{id}")
-    public Sputnik findSputnikById(@PathVariable Long id) {
+    public SputnikDto findSputnikById(@PathVariable @Min(1) Long id) {
         return sputnikService.findSputnikById(id);
     }
 
-    // Создание нового спутника
-    // POST http://localhost:8086/api/sputniks
-    // В теле запроса (JSON): {"name": "Moon", "orbitalPeriod": 27.3, "isNatural": true, "planet": {"id": 1}}
+    @Operation(summary = "Создать спутник", description = "Позволяет создать новую запись о спутнике в БД")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Sputnik createSputnik(@RequestBody Sputnik sputnik) {
-        return sputnikService.saveSputnik(sputnik);
+    public SputnikDto createSputnik(@RequestBody @Valid SputnikDto sputnikDto) {
+        return sputnikService.saveSputnik(sputnikDto);
     }
 
-    // Обновление существующего спутника
-    // PUT http://localhost:8086/api/sputniks/{id}
-    // В теле запроса (JSON): {"id": 1, "name": "Updated Moon", ..., "planet": {"id": 1}}
+    @Operation(summary = "Обновить данные о спутнике", description = "Позволяет обновить информацию о спутнике в БД")
     @PutMapping("/{id}")
-    public Sputnik updateSputnik(@PathVariable Long id, @RequestBody Sputnik sputnikDetails) {
-        if (sputnikDetails.getId() == null) {
-            sputnikDetails.setId(id);
-        } else if (!sputnikDetails.getId().equals(id)) {
-            throw new IllegalArgumentException("ID в пути (" + id + ") не совпадает с ID в теле запроса (" + sputnikDetails.getId() + ").");
+    public SputnikDto updateSputnik(@PathVariable @Min(1) Long id, @RequestBody @Valid SputnikDto sputnikDto) {
+        if (sputnikDto.getId() == null) {
+            sputnikDto.setId(id);
+        } else if (!sputnikDto.getId().equals(id)) {
+            throw new IllegalArgumentException("ID в пути (" + id + ") не совпадает с ID в теле запроса (" + sputnikDto.getId() + ").");
         }
-        return sputnikService.updateSputnik(sputnikDetails);
+        return sputnikService.updateSputnik(sputnikDto);
     }
 
-    // Удаление спутника по ID
-    // DELETE http://localhost:8086/api/sputniks/{id}
+    @Operation(summary = "Удалить спутник по ID", description = "Позволяет удалить спутник по ID из БД")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteSputnikById(@PathVariable Long id) {
+    public void deleteSputnikById(@PathVariable @Min(1) Long id) {
         sputnikService.deleteSputnikById(id);
     }
 }
