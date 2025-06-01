@@ -2,8 +2,11 @@ package ru.edu.penzgtu.lab.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.edu.penzgtu.lab.dto.PlanetDto;
 import ru.edu.penzgtu.lab.entity.Planet;
 import ru.edu.penzgtu.lab.repo.PlanetRepository;
+import ru.edu.penzgtu.lab.service.mapper.PlanetMapper;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -11,43 +14,61 @@ import java.util.NoSuchElementException;
 @Service
 @RequiredArgsConstructor
 public class PlanetService {
+
     private final PlanetRepository planetRepository;
+    private final PlanetMapper planetMapper; // Инъекция маппера
 
-    public List<Planet> findAllPlanets() {
-        return planetRepository.findAll();
+    @Transactional(readOnly = true)
+    public List<PlanetDto> findAllPlanets() {
+        List<Planet> planets = planetRepository.findAll();
+        return planetMapper.toListDto(planets);
     }
 
-    public Planet findPlanetById(Long id) {
-        return planetRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Не найдена планета по id: " + id));
+    @Transactional(readOnly = true)
+    public PlanetDto findPlanetById(Long id) {
+        Planet planet = planetRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Planet not found with id: " + id));
+        return planetMapper.toDto(planet);
     }
 
-    public Planet savePlanet(Planet planet) {
-        return planetRepository.save(planet);
+    @Transactional
+    public PlanetDto savePlanet(PlanetDto planetDto) {
+        Planet planetToSave = planetMapper.toEntity(planetDto);
+        if (planetDto.getId() != null && planetRepository.existsById(planetDto.getId())) {
+            throw new IllegalArgumentException("Planet with ID " + planetDto.getId() + " already exists. Use update method.");
+        }
+        if (planetDto.getId() == null) {
+            planetToSave.setId(null);
+        }
+
+        Planet savedPlanet = planetRepository.save(planetToSave);
+        return planetMapper.toDto(savedPlanet);
     }
 
-    public Planet updatePlanet(Planet planetWithUpdates) {
-        Long planetId = planetWithUpdates.getId();
-
+    @Transactional
+    public PlanetDto updatePlanet(PlanetDto planetDto) {
+        Long planetId = planetDto.getId();
         if (planetId == null) {
-            throw new IllegalArgumentException("Не задан id планеты для обновления.");
+            throw new IllegalArgumentException("Planet ID must be provided for update.");
         }
 
         Planet existingPlanet = planetRepository.findById(planetId)
-                .orElseThrow(() -> new NoSuchElementException("Не найдена планета для обновления по id: " + planetId));
+                .orElseThrow(() -> new NoSuchElementException("Planet not found with id: " + planetId + " for update."));
 
-        existingPlanet.setName(planetWithUpdates.getName());
-        existingPlanet.setType(planetWithUpdates.getType());
-        existingPlanet.setDiameter(planetWithUpdates.getDiameter());
-        existingPlanet.setHasAtmosphere(planetWithUpdates.getHasAtmosphere());
-        existingPlanet.setStarSystem(planetWithUpdates.getStarSystem());
+        existingPlanet.setName(planetDto.getName());
+        existingPlanet.setType(planetDto.getType());
+        existingPlanet.setDiameter(planetDto.getDiameter());
+        existingPlanet.setHasAtmosphere(planetDto.getHasAtmosphere());
+        existingPlanet.setStarSystem(planetDto.getStarSystem());
 
-        return planetRepository.save(existingPlanet);
+        Planet updatedPlanet = planetRepository.save(existingPlanet);
+        return planetMapper.toDto(updatedPlanet);
     }
 
+    @Transactional
     public void deletePlanetById(Long id) {
         if (!planetRepository.existsById(id)) {
-            throw new NoSuchElementException("Не найдена планета для удаления по id: " + id);
+            throw new NoSuchElementException("Planet not found with id: " + id + " for deletion.");
         }
         planetRepository.deleteById(id);
     }

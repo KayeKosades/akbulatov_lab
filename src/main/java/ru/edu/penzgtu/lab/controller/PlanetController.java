@@ -1,61 +1,61 @@
 package ru.edu.penzgtu.lab.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.edu.penzgtu.lab.entity.Planet;
+import ru.edu.penzgtu.lab.dto.PlanetDto;
 import ru.edu.penzgtu.lab.service.PlanetService;
 
 import java.util.List;
 
+@Validated
 @RestController
-@RequestMapping("/api/planets") // Базовый путь для всех эндпоинтов планет
+@RequestMapping("/api/planets")
 @RequiredArgsConstructor
+@Tag(name = "Планеты", description = "Операции над планетами")
 public class PlanetController {
 
     private final PlanetService planetService;
 
-    // Получение списка всех планет
-    // GET http://localhost:8086/api/planets
+    @Operation(summary = "Получение всех планет", description = "Позволяет выгрузить все планеты из БД")
     @GetMapping
-    public List<Planet> findAllPlanets() {
+    public List<PlanetDto> findAllPlanets() {
         return planetService.findAllPlanets();
     }
 
-    // Получение планеты по ID
-    // GET http://localhost:8086/api/planets/{id}
+    @Operation(summary = "Получение планеты по ID", description = "Позволяет выгрузить одну планету по ID из БД")
     @GetMapping("/{id}")
-    public Planet findPlanetById(@PathVariable Long id) {
+    public PlanetDto findPlanetById(@PathVariable @Min(1) Long id) {
         return planetService.findPlanetById(id);
     }
 
-    // Создание новой планеты
-    // POST http://localhost:8086/api/planets
-    // В теле запроса (JSON): {"name": "Mars", "type": "Terrestrial", ...}
+    @Operation(summary = "Создать планету", description = "Позволяет создать новую запись о планете в БД")
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED) // Возвращаем статус 201 Created
-    public Planet createPlanet(@RequestBody Planet planet) {
-        return planetService.savePlanet(planet);
+    @ResponseStatus(HttpStatus.CREATED)
+    public PlanetDto createPlanet(@RequestBody @Valid PlanetDto planetDto) {
+        return planetService.savePlanet(planetDto);
     }
 
-    // Обновление существующей планеты
-    // PUT http://localhost:8086/api/planets/{id}
-    // В теле запроса (JSON): {"id": 1, "name": "Updated Mars", "type": "Rocky Planet", ...}
+    @Operation(summary = "Обновить данные о планете", description = "Позволяет обновить информацию о планете в БД")
     @PutMapping("/{id}")
-    public Planet updatePlanet(@PathVariable Long id, @RequestBody Planet planetDetails) {
-        if (planetDetails.getId() == null) {
-            planetDetails.setId(id);
-        } else if (!planetDetails.getId().equals(id)) {
-            throw new IllegalArgumentException("ID в пути (" + id + ") не совпадает с ID в теле запроса (" + planetDetails.getId() + ").");
+    public PlanetDto updatePlanet(@PathVariable @Min(1) Long id, @RequestBody @Valid PlanetDto planetDto) {
+        if (planetDto.getId() == null) {
+            planetDto.setId(id);
+        } else if (!planetDto.getId().equals(id)) {
+            throw new IllegalArgumentException("ID в пути (" + id + ") не совпадает с ID в теле запроса (" + planetDto.getId() + ").");
         }
-        return planetService.updatePlanet(planetDetails);
+        return planetService.updatePlanet(planetDto);
     }
 
-    // Удаление планеты по ID
-    // DELETE http://localhost:8086/api/planets/{id}
+    @Operation(summary = "Удалить планету по ID", description = "Позволяет удалить планету по ID из БД")
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT) // Возвращаем статус 204 No Content
-    public void deletePlanetById(@PathVariable Long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePlanetById(@PathVariable @Min(1) Long id) {
         planetService.deletePlanetById(id);
     }
 
