@@ -5,21 +5,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.edu.penzgtu.lab.dto.SputnikDto;
 import ru.edu.penzgtu.lab.entity.Planet;
+import ru.edu.penzgtu.lab.exception.ErrorType;
+import ru.edu.penzgtu.lab.exception.PenzGtuException;
 import ru.edu.penzgtu.lab.repo.PlanetRepository;
 import ru.edu.penzgtu.lab.repo.SputnikRepository;
 import ru.edu.penzgtu.lab.entity.Sputnik;
 import ru.edu.penzgtu.lab.service.mapper.SputnikMapper;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
 public class SputnikService {
 
     private final SputnikRepository sputnikRepository;
-    private final PlanetRepository planetRepository; // Нужен для привязки спутника к планете
-    private final SputnikMapper sputnikMapper;   // Инъекция маппера
+    private final PlanetRepository planetRepository;
+    private final SputnikMapper sputnikMapper;
 
     @Transactional(readOnly = true)
     public List<SputnikDto> findAllSputniks() {
@@ -30,15 +31,14 @@ public class SputnikService {
     @Transactional(readOnly = true)
     public SputnikDto findSputnikById(Long id) {
         Sputnik sputnik = sputnikRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Sputnik not found with id: " + id));
+                .orElseThrow(() -> new PenzGtuException(ErrorType.NOT_FOUND, "Спутник с ID: " + id + " не найден."));
         return sputnikMapper.toDto(sputnik);
     }
 
     @Transactional(readOnly = true)
     public List<SputnikDto> findSputniksByPlanetId(Long planetId) {
         if (!planetRepository.existsById(planetId)) {
-            // Можно просто вернуть пустой список или кинуть исключение, если планета не найдена
-            throw new NoSuchElementException("Planet not found with id: " + planetId + " when searching for its sputniks.");
+            throw new PenzGtuException(ErrorType.NOT_FOUND, "Планета с ID: " + planetId + " не найдена при поиске ее спутников.");
         }
         List<Sputnik> sputniks = sputnikRepository.findByPlanetId(planetId);
         return sputnikMapper.toListDto(sputniks);
@@ -47,20 +47,23 @@ public class SputnikService {
     @Transactional
     public SputnikDto saveSputnik(SputnikDto sputnikDto) {
         if (sputnikDto.getPlanetId() == null) {
-            throw new IllegalArgumentException("Planet ID must be provided in SputnikDto to save it.");
+            throw new PenzGtuException(ErrorType.CLIENT_ERROR, "ID планеты должен быть предоставлен для сохранения спутника.");
         }
-        // Загружаем родительскую сущность Planet
+        if (sputnikDto.getName() == null || sputnikDto.getName().isBlank()) {
+            throw new PenzGtuException(ErrorType.CLIENT_ERROR, "Название спутника не может быть пустым.");
+        }
+
         Planet planet = planetRepository.findById(sputnikDto.getPlanetId())
-                .orElseThrow(() -> new NoSuchElementException("Planet not found with id: " + sputnikDto.getPlanetId() + ". Cannot save Sputnik."));
+                .orElseThrow(() -> new PenzGtuException(ErrorType.NOT_FOUND, "Планета с ID: " + sputnikDto.getPlanetId() + " не найдена. Невозможно сохранить спутник."));
 
         Sputnik sputnikToSave = sputnikMapper.toEntity(sputnikDto);
-        sputnikToSave.setPlanet(planet); // Устанавливаем связь с существующей планетой
+        sputnikToSave.setPlanet(planet);
 
         if (sputnikDto.getId() != null && sputnikRepository.existsById(sputnikDto.getId())) {
-            throw new IllegalArgumentException("Sputnik with ID " + sputnikDto.getId() + " already exists. Use update method.");
+            throw new PenzGtuException(ErrorType.CLIENT_ERROR, "Спутник с ID " + sputnikDto.getId() + " уже существует. Используйте метод обновления.");
         }
-        if (sputnikDto.getId() == null) { // Если это создание нового спутника
-            sputnikToSave.setId(null); // Убедимся, что ID генерируется базой
+        if (sputnikDto.getId() == null) {
+            sputnikToSave.setId(null);
         }
 
         Sputnik savedSputnik = sputnikRepository.save(sputnikToSave);
@@ -71,24 +74,25 @@ public class SputnikService {
     public SputnikDto updateSputnik(SputnikDto sputnikDto) {
         Long sputnikId = sputnikDto.getId();
         if (sputnikId == null) {
-            throw new IllegalArgumentException("Sputnik ID must be provided for update.");
+            throw new PenzGtuException(ErrorType.CLIENT_ERROR, "ID спутника должен быть предоставлен для обновления.");
         }
         if (sputnikDto.getPlanetId() == null) {
-            throw new IllegalArgumentException("Planet ID must be provided in SputnikDto for update.");
+            throw new PenzGtuException(ErrorType.CLIENT_ERROR, "ID планеты должен быть предоставлен для обновления спутника.");
+        }
+        if (sputnikDto.getName() == null || sputnikDto.getName().isBlank()) {
+            throw new PenzGtuException(ErrorType.CLIENT_ERROR, "Название спутника не может быть пустым при обновлении.");
         }
 
         Sputnik existingSputnik = sputnikRepository.findById(sputnikId)
-                .orElseThrow(() -> new NoSuchElementException("Sputnik not found with id: " + sputnikId + " for update."));
+                .orElseThrow(() -> new PenzGtuException(ErrorType.NOT_FOUND, "Спутник с ID: " + sputnikId + " не найден для обновления."));
 
-        // Обновляем поля
         existingSputnik.setName(sputnikDto.getName());
         existingSputnik.setOrbitalPeriod(sputnikDto.getOrbitalPeriod());
         existingSputnik.setIsNatural(sputnikDto.getIsNatural());
 
-        // Проверяем, изменилась ли планета
         if (!existingSputnik.getPlanet().getId().equals(sputnikDto.getPlanetId())) {
             Planet newPlanet = planetRepository.findById(sputnikDto.getPlanetId())
-                    .orElseThrow(() -> new NoSuchElementException("New Planet not found with id: " + sputnikDto.getPlanetId()));
+                    .orElseThrow(() -> new PenzGtuException(ErrorType.NOT_FOUND, "Новая планета с ID: " + sputnikDto.getPlanetId() + " не найдена."));
             existingSputnik.setPlanet(newPlanet);
         }
 
@@ -99,7 +103,7 @@ public class SputnikService {
     @Transactional
     public void deleteSputnikById(Long id) {
         if (!sputnikRepository.existsById(id)) {
-            throw new NoSuchElementException("Sputnik not found with id: " + id + " for deletion.");
+            throw new PenzGtuException(ErrorType.NOT_FOUND, "Спутник с ID: " + id + " не найден для удаления.");
         }
         sputnikRepository.deleteById(id);
     }
