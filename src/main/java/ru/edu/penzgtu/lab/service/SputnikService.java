@@ -67,6 +67,11 @@ public class SputnikService {
         }
 
         Sputnik savedSputnik = sputnikRepository.save(sputnikToSave);
+
+        //обновление количества спутников у связанной планеты
+        planet.setNumberOfMoonsConfirmed(planet.getNumberOfMoonsConfirmed() + 1);
+        planetRepository.save(planet);
+
         return sputnikMapper.toDto(savedSputnik);
     }
 
