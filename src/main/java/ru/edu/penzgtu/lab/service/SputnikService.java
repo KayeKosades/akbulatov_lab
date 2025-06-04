@@ -89,6 +89,8 @@ public class SputnikService {
         existingSputnik.setName(sputnikDto.getName());
         existingSputnik.setOrbitalPeriod(sputnikDto.getOrbitalPeriod());
         existingSputnik.setIsNatural(sputnikDto.getIsNatural());
+        existingSputnik.setMeanRadiusKm(sputnikDto.getMeanRadiusKm());
+        existingSputnik.setMassKg(sputnikDto.getMassKg());
 
         if (!existingSputnik.getPlanet().getId().equals(sputnikDto.getPlanetId())) {
             Planet newPlanet = planetRepository.findById(sputnikDto.getPlanetId())

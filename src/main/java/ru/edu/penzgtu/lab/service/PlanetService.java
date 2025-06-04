@@ -70,6 +70,9 @@ public class PlanetService {
         existingPlanet.setDiameter(planetDto.getDiameter());
         existingPlanet.setHasAtmosphere(planetDto.getHasAtmosphere());
         existingPlanet.setStarSystem(planetDto.getStarSystem());
+        existingPlanet.setDiscoveryDate(planetDto.getDiscoveryDate());
+        existingPlanet.setSurfaceGravity(planetDto.getSurfaceGravity());
+        existingPlanet.setNumberOfMoonsConfirmed(planetDto.getNumberOfMoonsConfirmed());
 
         Planet updatedPlanet = planetRepository.save(existingPlanet);
         return planetMapper.toDto(updatedPlanet);
