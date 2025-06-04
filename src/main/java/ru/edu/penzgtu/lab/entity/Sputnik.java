@@ -19,16 +19,27 @@ public class Sputnik {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, length = 200)
     private String name;
 
-    @Column(name = "orbital_period_days")
+    //Период обращения вокруг планеты
+    @Column(name = "orbital_period_days", nullable = false)
     private Double orbitalPeriod;
 
-    @Column(name = "is_natural")
-    private Boolean isNatural; // Естественный или искусственный спутник
+    //Естественный или искусственный спутник
+    @Column(name = "is_natural", nullable = false)
+    private Boolean isNatural;
 
-    // Отношение многие к одному. много спутников могут принадлежать одной планете
+    //Средний радиус в км
+    @Column(name = "mean_radius_km", nullable = false)
+    private Double meanRadiusKm;
+
+    // Масса в 10^20 кг
+    @Column(name = "mass_10_pow_20_kg")
+    private Double massKg;
+
+    //Связь с таблицей планет
+    //Отношение многие к одному. много спутников могут принадлежать одной планете
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "planet_id", nullable = false) // Внешний ключ в таблице 'sputniks', ссылается на 'id' из 'planets'
     @JsonBackReference
