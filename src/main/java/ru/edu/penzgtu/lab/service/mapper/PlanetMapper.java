@@ -37,6 +37,9 @@ public class PlanetMapper {
                 .diameter(planet.getDiameter())
                 .hasAtmosphere(planet.getHasAtmosphere())
                 .starSystem(planet.getStarSystem())
+                .discoveryDate(planet.getDiscoveryDate())
+                .surfaceGravity(planet.getSurfaceGravity())
+                .numberOfMoonsConfirmed(planet.getNumberOfMoonsConfirmed())
                 .satelliteNames(satelliteNames) // Список имен спутников
                 .build();
     }
@@ -46,12 +49,15 @@ public class PlanetMapper {
             return null;
         }
         Planet planet = new Planet();
-        planet.setId(planetDto.getId()); // Будь осторожен с этим при создании новых сущностей
+        planet.setId(planetDto.getId());
         planet.setName(planetDto.getName());
         planet.setType(planetDto.getType());
         planet.setDiameter(planetDto.getDiameter());
         planet.setHasAtmosphere(planetDto.getHasAtmosphere());
         planet.setStarSystem(planetDto.getStarSystem());
+        planet.setDiscoveryDate(planetDto.getDiscoveryDate());
+        planet.setSurfaceGravity(planetDto.getSurfaceGravity());
+        planet.setNumberOfMoonsConfirmed(planetDto.getNumberOfMoonsConfirmed());
         return planet;
     }
 }

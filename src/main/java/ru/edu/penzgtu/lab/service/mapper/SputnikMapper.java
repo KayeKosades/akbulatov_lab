@@ -32,6 +32,8 @@ public class SputnikMapper {
                 .name(sputnik.getName())
                 .orbitalPeriod(sputnik.getOrbitalPeriod())
                 .isNatural(sputnik.getIsNatural())
+                .massKg(sputnik.getMassKg())
+                .meanRadiusKm(sputnik.getMeanRadiusKm())
                 .planetId(planetId)
                 .build();
     }
@@ -41,10 +43,12 @@ public class SputnikMapper {
             return null;
         }
         Sputnik sputnik = new Sputnik();
-        sputnik.setId(sputnikDto.getId()); // Осторожно при создании новых
+        sputnik.setId(sputnikDto.getId());
         sputnik.setName(sputnikDto.getName());
         sputnik.setOrbitalPeriod(sputnikDto.getOrbitalPeriod());
         sputnik.setIsNatural(sputnikDto.getIsNatural());
+        sputnik.setMassKg(sputnikDto.getMassKg());
+        sputnik.setMeanRadiusKm(sputnikDto.getMeanRadiusKm());
         return sputnik;
     }
 }
