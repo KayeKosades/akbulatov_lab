@@ -69,7 +69,7 @@ public class SputnikService {
         Sputnik savedSputnik = sputnikRepository.save(sputnikToSave);
 
         //обновление количества спутников у связанной планеты
-        planet.setNumberOfMoonsConfirmed(planet.getNumberOfMoonsConfirmed() + 1);
+        planet.setNumberOfMoons(planet.getNumberOfMoons() + 1);
         planetRepository.save(planet);
 
         return sputnikMapper.toDto(savedSputnik);
@@ -78,18 +78,19 @@ public class SputnikService {
     @Transactional
     public SputnikDto updateSputnik(SputnikDto sputnikDto) {
         Long sputnikId = sputnikDto.getId();
+        // ... (валидации sputnikDto.getId(), sputnikDto.getPlanetId() и т.д.) ...
         if (sputnikId == null) {
             throw new PenzGtuException(ErrorType.CLIENT_ERROR, "ID спутника должен быть предоставлен для обновления.");
         }
         if (sputnikDto.getPlanetId() == null) {
             throw new PenzGtuException(ErrorType.CLIENT_ERROR, "ID планеты должен быть предоставлен для обновления спутника.");
         }
-        if (sputnikDto.getName() == null || sputnikDto.getName().isBlank()) {
-            throw new PenzGtuException(ErrorType.CLIENT_ERROR, "Название спутника не может быть пустым при обновлении.");
-        }
+
 
         Sputnik existingSputnik = sputnikRepository.findById(sputnikId)
                 .orElseThrow(() -> new PenzGtuException(ErrorType.NOT_FOUND, "Спутник с ID: " + sputnikId + " не найден для обновления."));
+
+        Planet oldPlanet = existingSputnik.getPlanet(); // Запоминаем старую планету
 
         existingSputnik.setName(sputnikDto.getName());
         existingSputnik.setOrbitalPeriod(sputnikDto.getOrbitalPeriod());
@@ -97,10 +98,20 @@ public class SputnikService {
         existingSputnik.setMeanRadiusKm(sputnikDto.getMeanRadiusKm());
         existingSputnik.setMassKg(sputnikDto.getMassKg());
 
-        if (!existingSputnik.getPlanet().getId().equals(sputnikDto.getPlanetId())) {
+
+        // Проверяем, изменилась ли планета-родитель
+        if (!oldPlanet.getId().equals(sputnikDto.getPlanetId())) {
             Planet newPlanet = planetRepository.findById(sputnikDto.getPlanetId())
                     .orElseThrow(() -> new PenzGtuException(ErrorType.NOT_FOUND, "Новая планета с ID: " + sputnikDto.getPlanetId() + " не найдена."));
             existingSputnik.setPlanet(newPlanet);
+
+            // Декремент у старой планеты
+            oldPlanet.setNumberOfMoons(Math.max(0, oldPlanet.getNumberOfMoons() - 1));
+            planetRepository.save(oldPlanet);
+
+            // Инкремент у новой планеты
+            newPlanet.setNumberOfMoons(newPlanet.getNumberOfMoons() + 1);
+            planetRepository.save(newPlanet);
         }
 
         Sputnik updatedSputnik = sputnikRepository.save(existingSputnik);
@@ -109,9 +120,15 @@ public class SputnikService {
 
     @Transactional
     public void deleteSputnikById(Long id) {
-        if (!sputnikRepository.existsById(id)) {
-            throw new PenzGtuException(ErrorType.NOT_FOUND, "Спутник с ID: " + id + " не найден для удаления.");
-        }
-        sputnikRepository.deleteById(id);
-    }
+        Sputnik sputnikToDelete = sputnikRepository.findById(id)
+                .orElseThrow(() -> new PenzGtuException(ErrorType.NOT_FOUND, "Спутник с ID: " + id + " не найден для удаления."));
+
+        Planet planet = sputnikToDelete.getPlanet();
+        sputnikRepository.delete(sputnikToDelete); // Удаляем сам спутник
+
+        //Обновление счетчика спутников у планеты
+        if (planet != null) {
+            planet.setNumberOfMoons(Math.max(0, planet.getNumberOfMoons() - 1));
+            planetRepository.save(planet); // Сохраняем обновленную планету
+        }}
 }
