@@ -60,7 +60,6 @@ public class Planet {
     @JsonBackReference(value="planet-starSystem")
     private StarSystem starSystemEntity;
 
-
     @OneToMany(
             mappedBy = "targetPlanet",      // Поле в ExplorationMission, которое ссылается на Planet
             cascade = CascadeType.ALL,      // Если удаляем Planet, удаляются все ее ExplorationMission
