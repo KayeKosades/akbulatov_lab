@@ -2,6 +2,7 @@ package ru.edu.penzgtu.lab.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -41,7 +42,8 @@ public class Sputnik {
     //Связь с таблицей планет
     //Отношение многие к одному. много спутников могут принадлежать одной планете
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "planet_id", nullable = false) // Внешний ключ в таблице 'sputniks', ссылается на 'id' из 'planets'
-    @JsonBackReference
+    @JoinColumn(name = "planet_id", nullable = false)
+    @NotNull
+    @JsonBackReference(value="planet-satellites")
     private Planet planet;
 }
