@@ -69,7 +69,7 @@ public class SputnikService {
         Sputnik savedSputnik = sputnikRepository.save(sputnikToSave);
 
         //обновление количества спутников у связанной планеты
-        planet.setNumberOfMoonsConfirmed(planet.getNumberOfMoonsConfirmed() + 1);
+        planet.setNumberOfMoons(planet.getNumberOfMoons() + 1);
         planetRepository.save(planet);
 
         return sputnikMapper.toDto(savedSputnik);
@@ -106,11 +106,11 @@ public class SputnikService {
             existingSputnik.setPlanet(newPlanet);
 
             // Декремент у старой планеты
-            oldPlanet.setNumberOfMoonsConfirmed(Math.max(0, oldPlanet.getNumberOfMoonsConfirmed() - 1));
+            oldPlanet.setNumberOfMoons(Math.max(0, oldPlanet.getNumberOfMoons() - 1));
             planetRepository.save(oldPlanet);
 
             // Инкремент у новой планеты
-            newPlanet.setNumberOfMoonsConfirmed(newPlanet.getNumberOfMoonsConfirmed() + 1);
+            newPlanet.setNumberOfMoons(newPlanet.getNumberOfMoons() + 1);
             planetRepository.save(newPlanet);
         }
 
@@ -128,7 +128,7 @@ public class SputnikService {
 
         //Обновление счетчика спутников у планеты
         if (planet != null) {
-            planet.setNumberOfMoonsConfirmed(Math.max(0, planet.getNumberOfMoonsConfirmed() - 1));
+            planet.setNumberOfMoons(Math.max(0, planet.getNumberOfMoons() - 1));
             planetRepository.save(planet); // Сохраняем обновленную планету
         }}
 }
