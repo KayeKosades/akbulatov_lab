@@ -2,12 +2,11 @@ package ru.edu.penzgtu.lab.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.*;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -34,16 +33,37 @@ public class PlanetDto {
     @Schema(description = "Диаметр в км", example = "12742.0")
     private Double diameter;
 
-    @JsonProperty("hasAtmosphere")
+    @JsonProperty("has_atmosphere")
+    @NotNull(message = "Поле Наличие атмфосфера не может быть пустым")
     @Schema(description = "Наличие атмосферы", example = "true")
     private Boolean hasAtmosphere;
 
-    @JsonProperty("starSystem")
-    @NotBlank(message = "Название звездной системы не может быть пустым")
-    @Schema(description = "Название звездной системы", example = "Солнечная")
-    private String starSystem;
+    @JsonProperty("discovery_date")
+    @PastOrPresent(message = "Дата открытия не может быть в будущем")
+    @Schema(description = "Дата открытия", example = "1781-03-13")
+    private LocalDate discoveryDate;
 
-    @JsonProperty("satelliteNames")
-    @Schema(description = "Названия спутников планеты (используется преимущественно для ответа)")
+    @JsonProperty("surface_gravity_g")
+    @NotNull(message = "Поле Поверхостная гравитация не может быть пустым")
+    @Positive(message = "Поверхностная гравитация должна быть положительной")
+    @Schema(description = "Поверхностная гравитация в g", example = "20.2")
+    private Double surfaceGravity;
+
+    @JsonProperty("number_of_moons")
+    @NotNull(message = "Количество спутников не может быть пустым")
+    @Min(value = 0, message = "Количество спутников не может быть отрицательным")
+    @Schema(description = "Количество спутников", example = "1")
+    private Integer numberOfMoons;
+
+    @JsonProperty("satellite_names")
+    @Schema(description = "Названия спутников планеты")
     private List<String> satelliteNames;
+
+    @JsonProperty("star_system_id")
+    @Schema(description = "ID звездной системы, к которой принадлежит планета (null, если блуждающая)", example = "1")
+    private Long starSystemId;
+
+    @JsonProperty("missionIds")
+    @Schema(description = "Список ID исследовательских миссий, связанных с планетой")
+    private List<Long> missionIds;
 }
